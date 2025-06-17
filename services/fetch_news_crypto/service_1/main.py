@@ -1,0 +1,9 @@
+from fastapi import FastAPI
+from utils import fetch_coindesk_cointelegraph_cryptopotato
+
+app = FastAPI()
+
+@app.get("/fetch_news")
+def fetch_news():
+    news = fetch_coindesk_cointelegraph_cryptopotato()
+    return {"count": len(news), "items": news}

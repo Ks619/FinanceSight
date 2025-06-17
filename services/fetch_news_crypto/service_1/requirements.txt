@@ -2,4 +2,5 @@ fastapi
 uvicorn
 feedparser
 newspaper3k
+requests
 lxml_html_clean
