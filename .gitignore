@@ -1,0 +1,35 @@
+# Python bytecode (compiled cache)
+__pycache__/
+*.py[cod]
+
+# Virtual environments (inside any subfolder)
+**/venv/
+**/.venv/
+**/env/
+
+# Editor & OS-specific files
+.vscode/
+.idea/
+.DS_Store
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Docker log files
+*.log
+
+# Project-level output
+received_data/
+
+# fetch_crypto outputs & virtual env
+services/fetch_crypto/__pycache__/
+services/fetch_crypto/received_data/
+services/fetch_crypto/fetch_crypto/
+
+# fetch_news_crypto outputs & virtual env
+services/fetch_news_crypto/__pycache__/
+services/fetch_news_crypto/received_data/
+services/fetch_news_crypto/fetch_news_crypto/
+

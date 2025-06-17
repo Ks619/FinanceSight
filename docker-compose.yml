@@ -1,0 +1,22 @@
+version: '3.9'
+
+services:
+  fetch_crypto:
+    build:
+      context: ./services/fetch_crypto
+      dockerfile: Dockerfile
+    container_name: fetch_crypto
+    working_dir: /app
+    volumes:
+      - ./services/fetch_crypto/received_data:/app/received_data
+    command: ["python", "services/fetch_crypto/main.py"]
+
+  fetch_news_crypto:
+    build:
+      context: ./services/fetch_news_crypto
+      dockerfile: Dockerfile
+    container_name: fetch_news_crypto
+    working_dir: /app
+    volumes:
+      - ./services/fetch_news_crypto/received_data:/app/received_data
+    command: ["python", "services/fetch_news_crypto/main.py"]

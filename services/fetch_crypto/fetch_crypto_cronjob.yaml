@@ -1,0 +1,15 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: fetch-crypto-job
+spec:
+  schedule: "0 15 * * *"  # 18:00 Israel time = 15:00 UTC
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: fetch-crypto
+            image: gcr.io/financesight-463118/fetch-crypto:latest
+            command: ["python", "services/fetch_crypto/main.py"]
+          restartPolicy: OnFailure

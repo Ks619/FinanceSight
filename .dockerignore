@@ -1,0 +1,21 @@
+# Ignore virtualenvs
+**/venv/
+**/.venv/
+**/env/
+
+# Bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# Git / system files
+.git/
+.gitignore
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
