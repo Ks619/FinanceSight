@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service_2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: service_2
+  template:
+    metadata:
+      labels:
+        app: service_2
+    spec:
+      containers:
+      - name: service_2
+      image: gcr.io.gcr.io/financesight-463118/fetch_news_crypto_service_2:v1
+      imagePullPolicy: IfNotPresent
+      ports:
+        - containerPort: 8000
+      env:
+      - name: PYTHONUNBUFFERED
+      value: "1"

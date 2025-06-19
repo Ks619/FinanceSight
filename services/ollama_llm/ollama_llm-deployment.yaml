@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama_llm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ollama_llm
+  template:
+    metadata:
+      labels:
+        app: ollama_llm
+    spec:
+      containers:
+      - name: ollama_llm
+      image: gcr.io.gcr.io/financesight-463118/fetch_news_crypto_ollama_llm:v1
+      imagePullPolicy: IfNotPresent
+      ports:
+        - containerPort: 11434
+      env:
+      - name: PYTHONUNBUFFERED
+      value: "1"

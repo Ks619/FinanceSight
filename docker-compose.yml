@@ -1,22 +1,60 @@
 version: '3.9'
 
 services:
-  fetch_crypto:
-    build:
-      context: ./services/fetch_crypto
-      dockerfile: Dockerfile
-    container_name: fetch_crypto
-    working_dir: /app
-    volumes:
-      - ./services/fetch_crypto/received_data:/app/received_data
-    command: ["python", "services/fetch_crypto/main.py"]
+  # fetch_crypto:
+    # build:
+    #   context: ./services/fetch_crypto
+    #   dockerfile: Dockerfile
+    # container_name: fetch_crypto
+    # working_dir: /app
+    # volumes:
+    #   - ./services/fetch_crypto/received_data:/app/received_data
+    # command: ["python", "services/fetch_crypto/main.py"]
 
-  fetch_news_crypto:
+
+  # fetch_news_crypto
+  service1:
     build:
-      context: ./services/fetch_news_crypto
-      dockerfile: Dockerfile
-    container_name: fetch_news_crypto
-    working_dir: /app
+      context: ./services/fetch_news_crypto/service_1
+    container_name: service1
+    ports:
+      - "8002:8000"
+
+  service2:
+    build:
+      context: ./services/fetch_news_crypto/service_2
+    container_name: service2
+    ports:
+      - "8003:8000"
+
+  service3:
+    build:
+      context: ./services/fetch_news_crypto/service_3
+    container_name: service3
+    ports:
+      - "8004:8000"
+
+  aggregator:
+    build:
+      context: ./services/fetch_news_crypto/aggregator
+    container_name: aggregator
+    ports:
+      - "8001:8000"
+    depends_on:
+      - service1
+      - service2
+      - service3
+      - llm
+  
+  llm:
+    build:
+      context: ./services/ollama_llm
+    container_name: ollama_llm
+    ports:
+      - "11434:11434"
     volumes:
-      - ./services/fetch_news_crypto/received_data:/app/received_data
-    command: ["python", "services/fetch_news_crypto/main.py"]
+      - ollama_data:/root/.ollama
+    tty: true
+
+volumes:
+  ollama_data:
