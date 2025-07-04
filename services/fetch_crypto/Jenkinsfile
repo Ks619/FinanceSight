@@ -1,0 +1,72 @@
+pipeline {
+    agent any
+
+    environment {
+        PROJECT_ID = "financesight-463118"
+        IMAGE_NAME = "fetch-crypto"
+        IMAGE_TAG = "latest"
+        IMAGE_URI = "gcr.io/${PROJECT_ID}/${IMAGE_NAME}:${IMAGE_TAG}"
+    }
+
+    stages {
+
+        stage('📥 Clone Repository') {
+            steps {
+                echo "🔄 Checking out source code from Git"
+                checkout scm
+            }
+        }
+
+        stage('🐳 Build Docker Image') {
+            steps {
+                dir('services/fetch_crypto') {
+                    script {
+                        echo "🔨 Building Docker image: ${IMAGE_URI}"
+                        sh "docker build -t ${IMAGE_URI} ."
+                    }
+                }
+            }
+        }
+
+        stage('🔐 Authenticate & Push to GCR') {
+            steps {
+                withCredentials([file(credentialsId: 'finsight-gcp-json-key', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                    script {
+                        echo "🔐 Activating GCP service account"
+                        sh "gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS"
+                        sh "gcloud auth configure-docker"
+                        echo "📤 Pushing Docker image to GCR: ${IMAGE_URI}"
+                        sh "docker push ${IMAGE_URI}"
+                    }
+                }
+            }
+        }
+
+        stage('🧪 Dry-Run: Validate Kubernetes CronJob') {
+            steps {
+                dir('services/fetch_crypto') {
+                    script {
+                        echo "🧪 Validating fetch_crypto_cronjob.yaml with kubectl (dry run)"
+                        sh "kubectl apply --dry-run=client -f fetch_crypto_cronjob.yaml"
+                        echo "✅ CronJob YAML is valid"
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                echo "🧹 Cleaning up Docker image: ${IMAGE_URI}"
+                sh "docker rmi ${IMAGE_URI} || true"
+            }
+        }
+        success {
+            echo '✅ Pipeline completed successfully!'
+        }
+        failure {
+            echo '❌ Pipeline failed!'
+        }
+    }
+}
