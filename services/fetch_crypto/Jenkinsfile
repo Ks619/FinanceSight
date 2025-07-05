@@ -6,6 +6,7 @@ pipeline {
         IMAGE_NAME = "fetch-crypto"
         IMAGE_TAG = "latest"
         IMAGE_URI = "gcr.io/${PROJECT_ID}/${IMAGE_NAME}:${IMAGE_TAG}"
+        DOCKER_CONFIG = "/root/.docker"
     }
 
     stages {
@@ -33,10 +34,12 @@ pipeline {
                 withCredentials([file(credentialsId: 'finsight-gcp-json-key', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
                     script {
                         echo "🔐 Activating GCP service account"
-                        sh "gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS"
-                        sh "gcloud auth configure-docker"
+                        sh '''
+                            gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
+                            gcloud auth configure-docker gcr.io --quiet
+                        '''
                         echo "📤 Pushing Docker image to GCR: ${IMAGE_URI}"
-                        sh "docker push ${IMAGE_URI}"
+                        sh 'docker push ${IMAGE_URI}'
                     }
                 }
             }
