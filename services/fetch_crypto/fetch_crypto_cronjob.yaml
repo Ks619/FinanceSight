@@ -10,7 +10,7 @@ spec:
         spec:
           containers:
             - name: fetch-crypto
-              image: gcr.io/financesight-463118/fetch-crypto:v1
+              image: me-west1-docker.pkg.dev/financesight-463118/crypto/fetch-crypto:latest
               imagePullPolicy: IfNotPresent
               env:
                 - name: PYTHONUNBUFFERED
