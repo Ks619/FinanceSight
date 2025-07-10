@@ -74,7 +74,7 @@ pipeline {
                         docker rmi ${IMAGE_URI} || true
 
                         echo "Deleting image from Artifact Registry..."
-                        gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}
+                        gcloud auth activate-service-account --key-file=\$GOOGLE_APPLICATION_CREDENTIALS
                         gcloud config set project ${PROJECT_ID}
                         gcloud artifacts docker images delete ${IMAGE_URI} --delete-tags --quiet || true
                         """
@@ -85,10 +85,6 @@ pipeline {
     }
 
     post {
-        always {
-            echo "Final cleanup: removing local Docker image if exists"
-            sh "docker rmi ${IMAGE_URI} || true"
-        }
         success {
             echo "✅ Pipeline completed successfully"
         }
