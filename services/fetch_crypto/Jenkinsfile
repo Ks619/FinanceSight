@@ -3,15 +3,28 @@ pipeline {
 
     environment {
         PROJECT_ID = "financesight-463118"
+        REGION = "me-west1"
+        REPO_NAME = "fetch-crypto"
         IMAGE_NAME = "fetch-crypto"
-        IMAGE_TAG = "latest"
-        IMAGE_URI = "gcr.io/${PROJECT_ID}/${IMAGE_NAME}:${IMAGE_TAG}"
+        IMAGE_URI = "${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:latest"
+        GCP_KEY_FILE = "/var/jenkins_home/gcp-key.json"
     }
 
     stages {
         stage('Clone Repository') {
             steps {
                 checkout scm
+            }
+        }
+
+        stage('Authenticate with GCP') {
+            steps {
+                sh """
+                    echo "Authenticating with Google Cloud..."
+                    gcloud auth activate-service-account --key-file=${GCP_KEY_FILE}
+                    gcloud config set project ${PROJECT_ID}
+                    gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
+                """
             }
         }
 
@@ -26,25 +39,10 @@ pipeline {
             }
         }
 
-        stage('Authenticate with Google Cloud') {
-            steps {
-                withCredentials([file(credentialsId: 'GCP_KEY_FILE', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
-                    script {
-                        sh """
-                        echo Authenticating with Google Cloud...
-                        gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}
-                        gcloud config set project ${PROJECT_ID}
-                        gcloud auth configure-docker --quiet
-                        """
-                    }
-                }
-            }
-        }
-
-        stage('Push Docker Image to GCR') {
+        stage('Push Docker Image to Artifact Registry') {
             steps {
                 script {
-                    echo "Pushing Docker image to Google Container Registry..."
+                    echo "Pushing Docker image to Artifact Registry..."
                     sh "docker push ${IMAGE_URI}"
                 }
             }
@@ -67,15 +65,15 @@ pipeline {
             }
         }
 
-        stage('Delete from GCR & Local Docker') {
+        stage('Delete from Artifact Registry & Local Docker') {
             steps {
                 withCredentials([file(credentialsId: 'GCP_KEY_FILE', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
                     script {
                         sh """
-                        echo Deleting Docker image locally...
+                        echo "Deleting local Docker image..."
                         docker rmi ${IMAGE_URI} || true
 
-                        echo Deleting Docker image from GCR...
+                        echo "Deleting image from Artifact Registry..."
                         gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}
                         gcloud config set project ${PROJECT_ID}
                         gcloud artifacts docker images delete ${IMAGE_URI} --delete-tags --quiet || true
@@ -88,15 +86,14 @@ pipeline {
 
     post {
         always {
-            echo "Cleaning up local Docker image"
-            // Remove local image after the pipeline to save space
+            echo "Final cleanup: removing local Docker image if exists"
             sh "docker rmi ${IMAGE_URI} || true"
         }
         success {
-            echo "Pipeline completed successfully"
+            echo "✅ Pipeline completed successfully"
         }
         failure {
-            echo "Pipeline failed"
+            echo "❌ Pipeline failed"
         }
     }
 }
