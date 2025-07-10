@@ -2,10 +2,7 @@ pipeline {
     agent any
 
     environment {
-        // GCP project ID
         PROJECT_ID = "financesight-463118"
-        
-        // Docker image details
         IMAGE_NAME = "fetch-crypto"
         IMAGE_TAG = "latest"
         IMAGE_URI = "gcr.io/${PROJECT_ID}/${IMAGE_NAME}:${IMAGE_TAG}"
@@ -14,7 +11,6 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
-                echo "Cloning source code from Git repository..."
                 checkout scm
             }
         }
@@ -32,15 +28,14 @@ pipeline {
 
         stage('Authenticate with Google Cloud') {
             steps {
-                // Use the service account JSON credentials stored in Jenkins
                 withCredentials([file(credentialsId: 'GCP_KEY_FILE', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
                     script {
-                        sh '''
-                            echo "Authenticating with Google Cloud..."
-                            gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
-                            gcloud config set project ${PROJECT_ID}
-                            gcloud auth configure-docker --quiet
-                        '''
+                        sh """
+                        echo Authenticating with Google Cloud...
+                        gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}
+                        gcloud config set project ${PROJECT_ID}
+                        gcloud auth configure-docker --quiet
+                        """
                     }
                 }
             }
@@ -58,10 +53,34 @@ pipeline {
         stage('Validate Kubernetes CronJob YAML (dry-run)') {
             steps {
                 dir('services/fetch_crypto') {
-                    echo "Validating Kubernetes YAML using kubectl dry-run"
-                    // This will validate the YAML syntax without requiring an actual Kubernetes cluster
-                    // If kubectl is not installed or the file is missing, the error will be skipped
-                    sh "kubectl apply --dry-run=client -f fetch_crypto_cronjob.yaml || echo 'Dry-run skipped (kubectl not available)'"
+                    script {
+                        echo "Validating Kubernetes YAML using kubectl dry-run"
+                        sh """
+                        if command -v kubectl >/dev/null 2>&1; then
+                          kubectl apply --dry-run=client -f fetch_crypto_cronjob.yaml
+                        else
+                          echo "Skipping dry-run: kubectl not available"
+                        fi
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Delete from GCR & Local Docker') {
+            steps {
+                withCredentials([file(credentialsId: 'GCP_KEY_FILE', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                    script {
+                        sh """
+                        echo Deleting Docker image locally...
+                        docker rmi ${IMAGE_URI} || true
+
+                        echo Deleting Docker image from GCR...
+                        gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}
+                        gcloud config set project ${PROJECT_ID}
+                        gcloud artifacts docker images delete ${IMAGE_URI} --delete-tags --quiet || true
+                        """
+                    }
                 }
             }
         }
