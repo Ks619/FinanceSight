@@ -18,15 +18,16 @@ pipeline {
 
         stage('Authenticate with GCP') {
             steps {
-        withCredentials([file(credentialsId: 'GCP_KEY_FILE', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
-            sh """
-                echo "Authenticating with GCP..."
-                gcloud auth activate-service-account --key-file=\$GOOGLE_APPLICATION_CREDENTIALS
-                gcloud config set project ${PROJECT_ID}
-                gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
-            """
-        }
-        }
+                withCredentials([file(credentialsId: 'GCP_KEY_FILE', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                    sh """
+                        echo "Authenticating with GCP..."
+                        gcloud auth activate-service-account --key-file=\$GOOGLE_APPLICATION_CREDENTIALS
+                        gcloud config set project ${PROJECT_ID}
+                        gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
+                    """
+                }
+            }
+        }  
 
         stage('Build Docker Image') {
             steps {
