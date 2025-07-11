@@ -7,7 +7,6 @@ pipeline {
         REPO_NAME = "fetch-crypto"
         IMAGE_NAME = "fetch-crypto"
         IMAGE_URI = "${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:latest"
-        GCP_KEY_FILE = "/var/jenkins_home/gcp-key.json"
     }
 
     stages {
@@ -19,13 +18,14 @@ pipeline {
 
         stage('Authenticate with GCP') {
             steps {
-                sh """
-                    echo "Authenticating with Google Cloud..."
-                    gcloud auth activate-service-account --key-file=${GCP_KEY_FILE}
-                    gcloud config set project ${PROJECT_ID}
-                    gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
-                """
-            }
+        withCredentials([file(credentialsId: 'GCP_KEY_FILE', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+            sh """
+                echo "Authenticating with GCP..."
+                gcloud auth activate-service-account --key-file=\$GOOGLE_APPLICATION_CREDENTIALS
+                gcloud config set project ${PROJECT_ID}
+                gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
+            """
+        }
         }
 
         stage('Build Docker Image') {

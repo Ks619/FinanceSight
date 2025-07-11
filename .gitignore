@@ -23,6 +23,9 @@ dist/
 # Project-level output
 received_data/
 
+# Jenkins execution commands
+jenkins/command_execute.txt
+
 # fetch_crypto outputs & virtual env
 services/fetch_crypto/__pycache__/
 services/fetch_crypto/received_data/
