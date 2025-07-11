@@ -53,18 +53,19 @@ pipeline {
             steps {
                 dir('services/fetch_crypto') {
                     script {
-                        echo "Validating Kubernetes YAML using kubectl dry-run"
-                        sh """
+                        echo "Validating Kubernetes YAML locally (offline)"
+                        sh '''
                         if command -v kubectl >/dev/null 2>&1; then
-                          kubectl apply --dry-run=client -f fetch_crypto_cronjob.yaml
+                        kubectl apply --dry-run=client --validate=false -f fetch_crypto_cronjob.yaml
                         else
-                          echo "Skipping dry-run: kubectl not available"
+                        echo "Skipping dry-run: kubectl not available"
                         fi
-                        """
+                        '''
                     }
                 }
             }
         }
+
 
         stage('Delete from Artifact Registry & Local Docker') {
             steps {
