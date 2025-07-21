@@ -27,7 +27,7 @@ pipeline {
                     """
                 }
             }
-        }  
+        }
 
         stage('Build Docker Image') {
             steps {
@@ -49,23 +49,24 @@ pipeline {
             }
         }
 
-        stage('Validate Kubernetes CronJob YAML (dry-run)') {
+        stage('Validate Kubernetes YAML using kubeconform') {
             steps {
                 dir('services/fetch_crypto') {
                     script {
-                        echo "Validating Kubernetes YAML locally (offline)"
-                        sh '''
-                        if command -v kubectl >/dev/null 2>&1; then
-                        kubectl apply --dry-run=client --validate=false -f fetch_crypto_cronjob.yaml
-                        else
-                        echo "Skipping dry-run: kubectl not available"
-                        fi
-                        '''
+                        echo "🔍 Validating YAML using kubeconform..."
+                        def result = bat(
+                            script: 'kubeconform -strict -verbose fetch_crypto_cronjob.yaml',
+                            returnStatus: true
+                        )
+                        if (result != 0) {
+                            error("❌ kubeconform validation failed")
+                        } else {
+                            echo "✅ kubeconform validation passed"
+                        }
                     }
                 }
             }
         }
-
 
         stage('Delete from Artifact Registry & Local Docker') {
             steps {
