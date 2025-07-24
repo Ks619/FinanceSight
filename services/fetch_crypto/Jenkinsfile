@@ -49,16 +49,40 @@ pipeline {
             }
         }
 
-        stage('Validate Kubernetes YAML using kubeconform') {
+        stage('Deploy to Temporary GKE Cluster') {
             steps {
-                dir('services/fetch_crypto') {
-                    script {
-                        echo '🔍 Validating YAML using kubeconform...'
-                        sh 'kubeconform -strict -verbose fetch_crypto_cronjob.yaml'
+                withCredentials([file(credentialsId: 'GCP_KEY_FILE', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                    dir('services/fetch_crypto') {
+                        script {
+                            sh """
+                            echo 'Setting up access to GKE cluster...'
+                            gcloud auth activate-service-account --key-file=\$GOOGLE_APPLICATION_CREDENTIALS
+                            gcloud config set project ${PROJECT_ID}
+                            
+                            CLUSTER_NAME="test-cluster"
+                            ZONE="me-west1-a"
+
+                            echo 'Creating temporary cluster...'
+                            gcloud container clusters create \$CLUSTER_NAME --zone \$ZONE --num-nodes=1 --quiet
+
+                            echo 'Getting cluster credentials...'
+                            gcloud container clusters get-credentials \$CLUSTER_NAME --zone \$ZONE
+
+                            echo 'Applying Kubernetes CronJob YAML...'
+                            kubectl apply -f fetch_crypto_cronjob.yaml
+
+                            echo 'Waiting and checking CronJob...'
+                            kubectl get cronjob
+
+                            echo 'Deleting temporary cluster...'
+                            gcloud container clusters delete \$CLUSTER_NAME --zone \$ZONE --quiet
+                            """
+                        }
                     }
                 }
             }
         }
+
 
         stage('Delete from Artifact Registry & Local Docker') {
             steps {
