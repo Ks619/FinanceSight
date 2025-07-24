@@ -1,5 +1,5 @@
-from models.crypto import MyCoins,Coin
-from utils.storage import save_investments
+from fetch_crypto.models.crypto import MyCoins, Coin
+from fetch_crypto.utils.storage import save_investments
 from fastapi import FastAPI
 import requests
 
@@ -86,8 +86,7 @@ if __name__ == "__main__":
     my_coins = MyCoins(
         coins=[
             Coin(symbol="bitcoin", buy_price=47000),
-            Coin(symbol="ethereum", buy_price=3100),
-            Coin(symbol="cardano", buy_price=0.2)
+            Coin(symbol="ethereum", buy_price=3100)
         ]
     )
 
