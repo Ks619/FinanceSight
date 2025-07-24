@@ -22,17 +22,18 @@ pipeline {
                     script {
                         echo 'Running tests with pytest...'
                         sh """
-                        python3 -m venv venv
-                        . venv/bin/activate
-                        pip install --upgrade pip
-                        pip install -r requirements.txt
-                        export PYTHONPATH=.
-                        pytest tests/
+                            python3 -m venv venv
+                            . venv/bin/activate
+                            pip install --upgrade pip
+                            pip install -r requirements.txt
+                            export PYTHONPATH=$(pwd)
+                            pytest tests/
                         """
                     }
                 }
             }
         }
+
 
 
         stage('Authenticate with GCP') {
