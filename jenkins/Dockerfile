@@ -3,7 +3,7 @@ FROM jenkins/jenkins:lts-jdk17
 USER root
 
 # ---------------------------------------------------
-# Install prerequisites (Docker, gcloud, kubectl)
+# Install prerequisites (Docker, gcloud, kubectl, kubeconform)
 # ---------------------------------------------------
 RUN apt-get update && apt-get install -y \
     curl \
@@ -41,5 +41,16 @@ RUN KUBECTL_VERSION="v1.30.1" && \
     curl -LO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl" && \
     install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && \
     rm kubectl
+
+# ---------------------------------------------------
+# Install kubeconform
+# ---------------------------------------------------
+RUN KUBECONFORM_VERSION="v0.7.0" && \
+    curl -L "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" -o kubeconform.tar.gz && \
+    tar -xzf kubeconform.tar.gz && \
+    mv kubeconform /usr/local/bin/kubeconform && \
+    chmod +x /usr/local/bin/kubeconform && \
+    rm kubeconform.tar.gz
+
 
 USER jenkins
