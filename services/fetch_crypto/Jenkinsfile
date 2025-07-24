@@ -61,9 +61,14 @@ pipeline {
                             
                             CLUSTER_NAME="test-cluster"
                             ZONE="me-west1-a"
+                            SERVICE_ACCOUNT="jenkins-deployer@financesight-463118.iam.gserviceaccount.com"
 
                             echo 'Creating temporary cluster...'
-                            gcloud container clusters create \$CLUSTER_NAME --zone \$ZONE --num-nodes=1 --quiet
+                            gcloud container clusters create \$CLUSTER_NAME \\
+                                --zone \$ZONE \\
+                                --num-nodes=1 \\
+                                --service-account=\$SERVICE_ACCOUNT \\
+                                --quiet
 
                             echo 'Getting cluster credentials...'
                             gcloud container clusters get-credentials \$CLUSTER_NAME --zone \$ZONE
@@ -82,6 +87,7 @@ pipeline {
                 }
             }
         }
+
 
 
         stage('Delete from Artifact Registry & Local Docker') {
