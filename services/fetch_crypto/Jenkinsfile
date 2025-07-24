@@ -16,6 +16,21 @@ pipeline {
             }
         }
 
+        stage('Run Tests') {
+            steps {
+                dir('services/fetch_crypto') {
+                    script {
+                        echo 'Running tests with pytest...'
+                        sh '''
+                            export PYTHONPATH=.
+                            pip install -r requirements.txt
+                            pytest tests --disable-warnings
+                        '''
+                    }
+                }
+            }
+        }
+
         stage('Authenticate with GCP') {
             steps {
                 withCredentials([file(credentialsId: 'GCP_KEY_FILE', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
