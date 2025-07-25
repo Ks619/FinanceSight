@@ -2,6 +2,10 @@
 __pycache__/
 *.py[cod]
 
+# Pytest cache
+.pytest_cache/
+**/.pytest_cache/
+
 # Virtual environments (inside any subfolder)
 **/venv/
 **/.venv/
