@@ -7,6 +7,8 @@ services:
     container_name: service1
     ports:
       - "8002:8000"
+    networks:
+      - crypto_net
 
   service2:
     build:
@@ -14,6 +16,8 @@ services:
     container_name: service2
     ports:
       - "8003:8000"
+    networks:
+      - crypto_net
 
   service3:
     build:
@@ -21,14 +25,39 @@ services:
     container_name: service3
     ports:
       - "8004:8000"
+    networks:
+      - crypto_net
+
+  ollama:
+    build:
+      context: ./ollama_llm
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    networks:
+      - crypto_net
 
   aggregator:
     build:
       context: ./aggregator
     container_name: aggregator
-    ports:
-      - "8001:8000"
     depends_on:
       - service1
       - service2
       - service3
+      - ollama
+    networks:
+      - crypto_net
+    environment:
+      SERVICE_1_URL: "http://service1:8000/fetch_news"
+      SERVICE_2_URL: "http://service2:8000/fetch_news"
+      SERVICE_3_URL: "http://service3:8000/fetch_news"
+      OLLAMA_API: "http://ollama:11434"
+      # command: >
+      #   uvicorn main:app --host 0.0.0.0 --port 8000
+
+      command: >
+        sh -c "pytest tests/ --asyncio-mode=strict -v"
+
+networks:
+  crypto_net:
