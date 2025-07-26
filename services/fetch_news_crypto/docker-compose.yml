@@ -29,7 +29,7 @@ services:
 
   ollama:
     build:
-      context: ./services/fetch_news_crypto/ollama_llm
+      context: ./ollama_llm
     container_name: ollama
     ports:
       - "11434:11434"

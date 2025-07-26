@@ -16,7 +16,7 @@ pipeline {
                         sh 'docker compose down -v || true'
 
                         // Build and run
-                        sh 'docker compose up --build --abort-on-container-exit'
+                        sh 'docker compose -f services/fetch_news_crypto/docker-compose.yml up --build --abort-on-container-exit'
 
                         // Get aggregator exit code
                         def exitCode = sh(script: 'docker inspect aggregator --format="{{.State.ExitCode}}"', returnStdout: true).trim()
