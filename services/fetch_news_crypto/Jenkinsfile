@@ -10,18 +10,20 @@ pipeline {
 
         stage('Run Integration Tests') {
             steps {
-                script {
-                    // Down old containers
-                    sh 'docker compose down -v || true'
+                dir('fetch_news_crypto') {  
+                    script {
+                        // Down old containers
+                        sh 'docker compose down -v || true'
 
-                    // Build and run
-                    sh 'docker compose up --build --abort-on-container-exit'
+                        // Build and run
+                        sh 'docker compose up --build --abort-on-container-exit'
 
-                    // Get aggregator exit code
-                    def exitCode = sh(script: 'docker inspect aggregator --format="{{.State.ExitCode}}"', returnStdout: true).trim()
-                    
-                    if (exitCode != '0') {
-                        error("Aggregator container exited with code ${exitCode}")
+                        // Get aggregator exit code
+                        def exitCode = sh(script: 'docker inspect aggregator --format="{{.State.ExitCode}}"', returnStdout: true).trim()
+                        
+                        if (exitCode != '0') {
+                            error("Aggregator container exited with code ${exitCode}")
+                        }
                     }
                 }
             }
@@ -30,8 +32,10 @@ pipeline {
 
     post {
         always {
-            echo 'Cleaning up containers...'
-            sh 'docker compose down -v'
+            dir('fetch_news_crypto') {
+                echo 'Cleaning up containers...'
+                sh 'docker compose down -v'
+            }
         }
     }
 }
