@@ -10,7 +10,7 @@ pipeline {
 
         stage('Run Integration Tests') {
             steps {
-                dir('fetch_news_crypto') {  
+                dir('services/fetch_news_crypto') {  
                     script {
                         // Down old containers
                         sh 'docker compose down -v || true'
