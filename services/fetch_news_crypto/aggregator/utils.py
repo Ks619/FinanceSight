@@ -1,7 +1,11 @@
 import httpx
 import traceback
+import os
+import json
 
-def split_text_into_chunks(text, max_length=4000):
+OLLAMA_API = os.getenv("OLLAMA_API", "http://ollama:11434")
+
+def split_text_into_chunks(text, max_length=2000):
     paragraphs = text.split("\n")
     chunks = []
     current_chunk = ""
@@ -26,26 +30,27 @@ async def analyze_with_ollama(chunk: str):
         f"{chunk}"
     )
 
-    async with httpx.AsyncClient() as client:
-        try:
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(600.0, connect=60.0)) as client:
             response = await client.post(
-                "http://llm:11434/api/generate",
-                json={
-                    "model": "llama3",
-                    "prompt": prompt,
-                    "stream": False
-                },
-                timeout=500
+                f"{OLLAMA_API}/api/generate",
+                json={"model": "llama3", "prompt": prompt, "stream": True}
             )
 
             response.raise_for_status()
-            result = response.json()
+            result = ""
+            async for line in response.aiter_lines():
+                if line.strip():
+                    try:
+                        data = json.loads(line)
+                        result += data.get("response", "")
+                    except json.JSONDecodeError as e:
+                        result += f"\n[Decode error]: {e}"
+            return result.strip()
 
-            return result.get("response", "").strip()
-        
-        except httpx.HTTPStatusError as e:
-            return f"HTTP error: {e.response.status_code} - {e.response.text}"
-        except httpx.RequestError as e:
-            return f"Request error: {str(e)}"
-        except Exception as e:
-            return f"Unexpected error: {str(e)}"
+    except httpx.HTTPStatusError as e:
+        return f"HTTP error: {e.response.status_code} - {e.response.text}"
+    except httpx.RequestError as e:
+        return f"Request error: {str(e)}"
+    except Exception as e:
+        return f"Unexpected error: {str(e)}"

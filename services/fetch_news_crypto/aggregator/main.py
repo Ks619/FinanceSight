@@ -14,7 +14,7 @@ SERVICES = [
 ]
 
 # URL and model name for Ollama LLM service
-OLLAMA_URL = os.getenv("OLLAMA_API", "http://ollama-llm:11434/api/generate")
+OLLAMA_URL = os.getenv("OLLAMA_API", "http://ollama:11434") + "/api/generate"
 OLLAMA_MODEL = "llama3"
 
 # Semaphore to limit concurrent analysis requests
@@ -77,6 +77,5 @@ async def orchestrate_and_save_news():
         "summary_chunks": results
     }
 
-@app.get("/get_crypto_news")
-async def get_crypto_news():
-    return await orchestrate_and_save_news()
+if __name__ == "__main__":
+    asyncio.run(orchestrate_and_save_news())
