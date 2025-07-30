@@ -2,29 +2,27 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "aggregator-test-image"
-        SERVICE_DIR = "services/fetch_news_crypto/aggregator"
+        COMPOSE_FILE = "services/fetch_news_crypto/docker-compose.yml"
+        AGGREGATOR_SERVICE = "aggregator"
     }
 
     stages {
-        stage('Build Docker Image') {
+        stage('Run Tests via Docker Compose') {
             steps {
-                dir("${SERVICE_DIR}") {
+                dir('services/fetch_news_crypto') {
                     script {
-                        echo "Building Docker image for aggregator tests..."
-                        sh "docker build -t ${IMAGE_NAME} ."
-                    }
-                }
-            }
-        }
+                        echo "Building and running all services using docker-compose..."
 
-        stage('Run Tests') {
-            steps {
-                script {
-                    echo "Running pytest inside Docker container..."
-                    sh """
-                        docker run --rm ${IMAGE_NAME}
-                    """
+                        // Run the whole stack, aggregator will exit after tests
+                        sh "docker compose -f ${COMPOSE_FILE} up --build --abort-on-container-exit"
+
+                        // Capture test result (aggregator container's exit code)
+                        def aggregator_exit = sh(script: "docker compose -f ${COMPOSE_FILE} ps -q ${AGGREGATOR_SERVICE} | xargs docker inspect -f '{{.State.ExitCode}}'", returnStdout: true).trim()
+                        
+                        if (aggregator_exit != "0") {
+                            error("Aggregator container exited with code ${aggregator_exit}")
+                        }
+                    }
                 }
             }
         }
@@ -32,8 +30,8 @@ pipeline {
 
     post {
         always {
-            echo "Cleaning up any dangling images..."
-            sh "docker image prune -f"
+            echo "Cleaning up containers..."
+            sh "docker compose -f ${COMPOSE_FILE} down -v"
         }
     }
 }
