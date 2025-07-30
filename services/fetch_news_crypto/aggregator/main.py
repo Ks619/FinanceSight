@@ -5,6 +5,8 @@ import json
 from pathlib import Path
 from utils import split_text_into_chunks, analyze_with_ollama
 import os
+from datetime import datetime, timezone
+
 
 # List of microservices that provide crypto news
 SERVICES = [
@@ -18,9 +20,20 @@ OLLAMA_URL = os.getenv("OLLAMA_API", "http://ollama:11434") + "/api/generate"
 OLLAMA_MODEL = "llama3"
 
 # Semaphore to limit concurrent analysis requests
-semaphore = asyncio.Semaphore(3)
+semaphore = asyncio.Semaphore(1)
 
 app = FastAPI()
+
+def is_published_today(published_str: str) -> bool:
+    try:
+        # example: "Mon, 28 Jul 2025 20:23:43 +0100"
+        published_dt = datetime.strptime(published_str, "%a, %d %b %Y %H:%M:%S %z")
+        today = datetime.now(published_dt.tzinfo).date()
+        return published_dt.date() == today
+    except Exception as e:
+        print(f"[!] Failed to parse published date: {published_str} | {e}")
+        return False
+
 
 async def fetch_with_retry(url: str, retries: int = 5, delay: float = 5.0):
     """Try to fetch data from a service with retries on failure."""
@@ -55,11 +68,18 @@ async def orchestrate_and_save_news():
     for data in responses:
         all_news.extend(data.get("items", []))
 
+    # Filter today's news only
+    today_news = [item for item in all_news if is_published_today(item.get("published", ""))]
+
+    if not today_news:
+        print("No news published today.")
+        return {"message": "No news published today.", "count": 0}
+
     # Save the news to a JSON file
     path = Path("received_data")
     path.mkdir(parents=True, exist_ok=True)
     with open(path / "crypto_news.json", "w", encoding="utf-8") as f:
-        json.dump(all_news, f, ensure_ascii=False, indent=4)
+        json.dump(today_news, f, ensure_ascii=False, indent=4)
 
     # Analyze news content
     full_text = "\n\n".join([item.get("content", "") for item in all_news if item.get("content")])

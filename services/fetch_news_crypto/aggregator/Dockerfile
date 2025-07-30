@@ -15,6 +15,6 @@ ENV PYTHONPATH=/app
 COPY . .
 
 # Run pytest in verbose mode, targeting the tests/ directory
-# CMD ["pytest", "tests", "--asyncio-mode=strict", "-v"]
-CMD ["python", "-u", "main.py"]
+CMD ["pytest", "tests", "--asyncio-mode=strict", "-v"]
+# CMD ["python", "-u", "main.py"]
 # CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

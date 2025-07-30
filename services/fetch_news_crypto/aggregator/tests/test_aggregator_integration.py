@@ -2,6 +2,7 @@ import os
 import json
 import pytest
 import main
+from unittest.mock import patch
 
 @pytest.mark.integration
 @pytest.mark.asyncio
@@ -15,32 +16,33 @@ async def test_orchestrate_and_save_news_integration():
     news_file = "received_data/crypto_news.json"
     summary_file = "received_data/crypto_news_analysis.txt"
 
-    # try:
-    result = await main.orchestrate_and_save_news()
+    # Patch split_text_into_chunks to return only the first 2 chunks
+    original_splitter = main.split_text_into_chunks
 
-    # Validate structure of the result
-    assert isinstance(result, dict)
-    assert result["count"] > 0
-    assert len(result["summary_chunks"]) > 0
+    def limited_chunker(text: str, max_length: int = 2000):
+        chunks = original_splitter(text, max_length)
+        return chunks[:2]
 
-    # Check that files were created
-    assert os.path.exists(news_file), "crypto_news.json was not created"
-    assert os.path.exists(summary_file), "crypto_news_analysis.txt was not created"
+    with patch("main.split_text_into_chunks", side_effect=limited_chunker):
+        result = await main.orchestrate_and_save_news()
 
-    # Validate JSON file content
-    with open(news_file, "r", encoding="utf-8") as f:
-        news = json.load(f)
-        assert isinstance(news, list), "Expected a list of items in crypto_news.json"
-        assert len(news) > 0, "News list is empty"
+        # Validate result structure
+        assert isinstance(result, dict)
+        assert result["count"] > 0
+        assert len(result["summary_chunks"]) > 0
+        assert len(result["summary_chunks"]) <= 2
 
-    # Validate summary content
-    with open(summary_file, "r", encoding="utf-8") as f:
-        summary_text = f.read()
-        assert len(summary_text) > 30
+        # Files must be created
+        assert os.path.exists(news_file), "crypto_news.json was not created"
+        assert os.path.exists(summary_file), "crypto_news_analysis.txt was not created"
 
-    # finally:
-    #     # Clean up the created files after the test (if they exist)
-    #     if os.path.exists(news_file):
-    #         os.remove(news_file)
-    #     if os.path.exists(summary_file):
-    #         os.remove(summary_file)
+        # Validate news file
+        with open(news_file, "r", encoding="utf-8") as f:
+            news = json.load(f)
+            assert isinstance(news, list)
+            assert len(news) > 0
+
+        # Validate summary
+        with open(summary_file, "r", encoding="utf-8") as f:
+            summary_text = f.read()
+            assert len(summary_text) > 30

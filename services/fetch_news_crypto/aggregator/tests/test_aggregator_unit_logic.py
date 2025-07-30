@@ -1,7 +1,7 @@
 import pytest  
 from unittest.mock import AsyncMock, patch  
 import main  
-
+from datetime import datetime
 
 # Test the function that splits large text into smaller chunks
 def test_split_text_into_chunks():
@@ -45,6 +45,7 @@ async def test_analyze_limited_mocked_llm():
 @pytest.mark.asyncio
 async def test_orchestrate_with_mocked_services_and_llm(tmp_path):
     # Define a fake response that simulates the result from one news service
+    today_str = datetime.now().strftime("%a, %d %b %Y %H:%M:%S +0000")  # example: "Mon, 29 Jul 2025 17:40:00 +0000"
     fake_response = {
         "count": 2,
         "items": [
@@ -59,7 +60,7 @@ async def test_orchestrate_with_mocked_services_and_llm(tmp_path):
                 "title": "Ethereum",
                 "content": "ETH is strong",
                 "link": "...",
-                "published": "today",
+                "published": today_str,
                 "source": "url"
             }
         ]

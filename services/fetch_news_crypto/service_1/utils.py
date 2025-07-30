@@ -3,7 +3,7 @@ import feedparser
 import requests
 
 FEEDS = [
-    "https://www.coindesk.com/arc/outboundfeeds/rss/",
+    # "https://www.coindesk.com/arc/outboundfeeds/rss/",
     "https://cointelegraph.com/rss",
     "https://cryptopotato.com/feed/",
 ]

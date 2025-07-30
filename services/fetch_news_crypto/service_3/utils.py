@@ -3,7 +3,7 @@ import feedparser
 import requests
 
 FEEDS = [
-    "https://www.newsbtc.com/feed/",
+    # "https://www.newsbtc.com/feed/",
     "https://u.today/rss"
 ]
 

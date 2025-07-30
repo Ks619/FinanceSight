@@ -1,37 +1,39 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME = "aggregator-test-image"
+        SERVICE_DIR = "services/fetch_news_crypto/aggregator"
+    }
+
     stages {
-        stage('Clone Repository') {
+        stage('Build Docker Image') {
             steps {
-                checkout scm
-            }
-        }
-
-        stage('Run Integration Tests') {
-            steps {
-                dir('services/fetch_news_crypto') {
+                dir("${SERVICE_DIR}") {
                     script {
-                        sh 'docker compose down -v || true'
-                        sh 'docker compose up --build --abort-on-container-exit'
-
-                        def exitCode = sh(script: 'docker inspect aggregator --format="{{.State.ExitCode}}"', returnStdout: true).trim()
-                        if (exitCode != '0') {
-                            error("Aggregator container exited with code ${exitCode}")
-                        }
+                        echo "Building Docker image for aggregator tests..."
+                        sh "docker build -t ${IMAGE_NAME} ."
                     }
                 }
             }
-}
+        }
 
+        stage('Run Tests') {
+            steps {
+                script {
+                    echo "Running pytest inside Docker container..."
+                    sh """
+                        docker run --rm ${IMAGE_NAME}
+                    """
+                }
+            }
+        }
     }
 
     post {
         always {
-            dir('fetch_news_crypto') {
-                echo 'Cleaning up containers...'
-                sh 'docker compose down -v'
-            }
+            echo "Cleaning up any dangling images..."
+            sh "docker image prune -f"
         }
     }
 }
