@@ -39,7 +39,7 @@ async def fetch_with_retry(url: str, retries: int = 5, delay: float = 5.0):
     """Try to fetch data from a service with retries on failure."""
     for attempt in range(1, retries + 1):
         try:
-            async with httpx.AsyncClient(timeout=120.0) as client:
+            async with httpx.AsyncClient(timeout=180.0) as client:
                 response = await client.get(url)
                 response.raise_for_status()
                 return response.json()
