@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        COMPOSE_FILE = "services/fetch_news_crypto/docker-compose.yml"
+        COMPOSE_FILE = "docker-compose.yml"
         AGGREGATOR_SERVICE = "aggregator"
     }
 
