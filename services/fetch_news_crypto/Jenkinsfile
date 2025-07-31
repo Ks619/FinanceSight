@@ -10,19 +10,11 @@ pipeline {
         stage('Run Tests via Docker Compose') {
             steps {
                 dir('services/fetch_news_crypto') {
-                    script {
-                        echo "Building and running all services using docker-compose..."
-
-                        // Run the whole stack, aggregator will exit after tests
-                        sh "docker compose -f ${COMPOSE_FILE} up --build --abort-on-container-exit"
-
-                        // Capture test result (aggregator container's exit code)
-                        def aggregator_exit = sh(script: "docker compose -f ${COMPOSE_FILE} ps -q ${AGGREGATOR_SERVICE} | xargs docker inspect -f '{{.State.ExitCode}}'", returnStdout: true).trim()
-                        
-                        if (aggregator_exit != "0") {
-                            error("Aggregator container exited with code ${aggregator_exit}")
-                        }
-                    }
+                    sh '''
+                    docker compose -f docker-compose.yml \
+                                   up --build --abort-on-container-exit \
+                                   --exit-code-from aggregator
+                    '''
                 }
             }
         }
@@ -31,7 +23,10 @@ pipeline {
     post {
         always {
             echo "Cleaning up containers..."
-            sh "docker compose -f ${COMPOSE_FILE} down -v"
+            dir('services/fetch_news_crypto') {
+                sh "docker compose -f docker-compose.yml down -v"
+            }
         }
     }
 }
+
